@@ -37,5 +37,5 @@ if __name__ == "__main__":
     requirements_file = "requirements.txt"
     requirements = parse_requirements(requirements_file)
     python_version = get_python_version()
-    environment_yml_content = generate_environment_yml(requirements, python_version=python_version, env_name="bo-env")
+    environment_yml_content = generate_environment_yml(requirements, python_version=python_version, env_name="rbo-env")
     save_to_yml(environment_yml_content)

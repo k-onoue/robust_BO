@@ -3,6 +3,13 @@ import torch
 from torch import Tensor
 
 
+def negate_function(func):
+    def negated_func(x):
+        return -func(x)
+
+    return negated_func
+
+
 def sinusoidal_synthetic(x: Tensor) -> Tensor:
     r"""
     Computes the function f(x) = -(x-1)^2 * \sin(3x + 5^{-1} + 1) for a given tensor input x.
@@ -151,10 +158,40 @@ def hartmann6(x: Tensor) -> Tensor:
     return val
 
 
+# if __name__ == "__main__":
 
-# import gpytorch
-# import torch
-# from torch import Tensor
+#     gp_info = {
+#         "kernel": {
+#             "type": "rational_quadratic",  # matern or rational_quadratic
+#             "alpha_mean": 0.1,
+#             "alpha_std": 0.05,
+#             "lengthscale_mean": 0.1,
+#             "lengthscale_std": 0.05,
+#             # outputscale を指定しない場合は使用しない
+#             # "outputscale_mean": 1.0,
+#             # "outputscale_std": 0.1,
+#         },
+#         "mean": {
+#             "type": "constant",
+#             "value": 0.0,
+#         },
+#     }
+
+#     search_space = torch.tensor([[-10] * 6, [10] * 6]).to(torch.float32)
+
+#     # クラスのインスタンスを作成
+#     gpsample = GPSamplePathWithOutliers(gp_info=gp_info, search_space=search_space)
+#     print(gpsample)
+
+#     # テストデータでの予測
+#     x = torch.tensor([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+#                       [2, -5, 0, 0.3, -9, 8.6]], dtype=torch.float32)
+
+#     with torch.no_grad():
+#         mean = gpsample(x)
+#         print("Predicted mean:", mean)
+#         print(f"Output shape: {mean.shape}")
+
 
 # class GPSamplePathWithOutliers(gpytorch.models.ExactGP):
 #     def __init__(
@@ -189,7 +226,7 @@ def hartmann6(x: Tensor) -> Tensor:
 #         upper_bounds = self.search_space[1]
 #         train_X = lower_bounds + (upper_bounds - lower_bounds) * torch.rand((num_samples, num_features))
 
-#         train_Y = (torch.randn(num_samples, 1) - 1 / 2) * 3
+#         train_Y = sinusoidal_synthetic(train_X)
 
 #         return train_X, train_Y
 
@@ -281,39 +318,6 @@ def hartmann6(x: Tensor) -> Tensor:
 #             return output.mean
 
 
-# # if __name__ == "__main__":
-
-# #     gp_info = {
-# #         "kernel": {
-# #             "type": "rational_quadratic",  # matern or rational_quadratic
-# #             "alpha_mean": 0.1,
-# #             "alpha_std": 0.05,
-# #             "lengthscale_mean": 0.1,
-# #             "lengthscale_std": 0.05,
-# #             # outputscale を指定しない場合は使用しない
-# #             # "outputscale_mean": 1.0,
-# #             # "outputscale_std": 0.1,
-# #         },
-# #         "mean": {
-# #             "type": "constant",
-# #             "value": 0.0,
-# #         },
-# #     }
-
-# #     search_space = torch.tensor([[-10] * 6, [10] * 6]).to(torch.float32)
-
-# #     # クラスのインスタンスを作成
-# #     gpsample = GPSamplePathWithOutliers(gp_info=gp_info, search_space=search_space)
-# #     print(gpsample)
-
-# #     # テストデータでの予測
-# #     x = torch.tensor([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
-# #                       [2, -5, 0, 0.3, -9, 8.6]], dtype=torch.float32)
-
-# #     with torch.no_grad():
-# #         mean = gpsample(x)
-# #         print("Predicted mean:", mean)
-# #         print(f"Output shape: {mean.shape}")
 
 
 

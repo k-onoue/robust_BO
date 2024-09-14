@@ -5,7 +5,16 @@ import os
 import sys
 
 # import pandas as pd
-# import torch
+import numpy as np
+import torch
+
+
+def set_random_seed(seed: int):
+    """Set seed for reproducibility."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 def set_logger(log_filename_base, save_dir):

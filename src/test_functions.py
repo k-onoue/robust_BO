@@ -241,7 +241,7 @@ def hartmann6(x: Tensor) -> Tensor:
 
 #     def _build_covariance_module(self) -> gpytorch.kernels.Kernel:
 #         kernel_info = self.gp_info["kernel"]
-        
+
 #         # ベースカーネルを構築
 #         if kernel_info["type"] == "matern":
 #             base_kernel = gpytorch.kernels.MaternKernel(
@@ -316,9 +316,6 @@ def hartmann6(x: Tensor) -> Tensor:
 #         with torch.no_grad():
 #             output = self.forward(x)
 #             return output.mean
-
-
-
 
 
 # if __name__ == "__main__":

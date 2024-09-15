@@ -103,7 +103,7 @@ def search_log_files(
 #             elif "Iteration" in line:
 #                 mode = "bo_loop"
 #             elif "Optimization completed." in line:
-#                 break  
+#                 break
 
 #             if mode == "init":
 #                 self._parse_init_data(line)

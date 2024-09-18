@@ -181,6 +181,8 @@ class ExactTP(GP):
             with settings.cg_tolerance(settings.eval_cg_tolerance.value()):
                 predictive_mean, predictive_covar = self.prediction_strategy.exact_predictive(full_mean, full_covar)
 
+            # predictive_df = self.likelihood.df + self.prediction_strategy.num_train
+
             # Reshape predictive mean to match the appropriate event shape
             predictive_mean = predictive_mean.view(*batch_shape, *test_shape).contiguous()
 

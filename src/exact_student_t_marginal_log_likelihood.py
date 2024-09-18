@@ -45,6 +45,19 @@ class ExactStudentTMarginalLogLikelihood(MarginalLogLikelihood):
             )
         super().__init__(likelihood, model)
 
+    def _add_other_terms(self, res, params):
+        # Add additional terms (SGPR / learned inducing points, heteroskedastic likelihood models)
+        for added_loss_term in self.model.added_loss_terms():
+            res = res.add(added_loss_term.loss(*params))
+
+        # Add log probs of priors on the (functions of) parameters
+        res_ndim = res.ndim
+        for name, module, prior, closure, _ in self.model.named_priors():
+            prior_term = prior.log_prob(closure(module))
+            res.add_(prior_term.view(*prior_term.shape[:res_ndim], -1).sum(dim=-1))
+
+        return res
+
     def forward(self, function_dist, target, *params, **kwargs):
         r"""
         Computes the exact marginal log likelihood.
@@ -55,9 +68,9 @@ class ExactStudentTMarginalLogLikelihood(MarginalLogLikelihood):
         :rtype: torch.Tensor
         :return: Exact MLL. Output shape corresponds to batch shape of the model/input data.
         """
-        # Validate input
-        if not isinstance(function_dist, MultivariateNormal):
-            raise RuntimeError("ExactStudentTMarginalLogLikelihood can only operate on Gaussian random variables")
+        # # Validate input
+        # if not isinstance(function_dist, MultivariateNormal):
+        #     raise RuntimeError("ExactStudentTMarginalLogLikelihood can only operate on Gaussian random variables")
 
         # Prior mean and covariance
         mean = function_dist.mean

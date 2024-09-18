@@ -14,12 +14,6 @@ from gpytorch.kernels import MaternKernel, ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.priors import GammaPrior
 
-from tptorch.distributions import MultivariateStudentT
-from tptorch.likelihoods import StudentTLikelihood
-from tptorch.mlls.exact_student_t_marginal_log_likelihood import (
-    ExactStudentTMarginalLogLikelihood,
-)
-from tptorch.models.exact_tp import ExactTP
 
 # ======================
 # Model Configuration Data Classes
@@ -40,19 +34,19 @@ class GPModelConfig:
     dtype: torch.dtype = torch.float
 
 
-@dataclass
-class TPModelConfig:
-    ard_num_dims: int
-    nu: float = 5.0  # Degrees of freedom for the Student's T distribution
-    lengthscale_prior: gpytorch.priors.Prior = field(default_factory=lambda: GammaPrior(3.0, 6.0))
-    outputscale_prior: gpytorch.priors.Prior = field(default_factory=lambda: GammaPrior(2.0, 0.15))
-    noise_prior: gpytorch.priors.Prior = field(default_factory=lambda: GammaPrior(1.1, 0.05))
-    lengthscale_constraint: gpytorch.constraints.Interval = field(default_factory=Positive)
-    outputscale_constraint: gpytorch.constraints.Interval = field(default_factory=Positive)
-    noise_constraint: gpytorch.constraints.Interval = field(default_factory=lambda: GreaterThan(1e-4))
-    trained_params: Optional[dict] = None
-    device: torch.device = torch.device("cpu")
-    dtype: torch.dtype = torch.float
+# @dataclass
+# class TPModelConfig:
+#     ard_num_dims: int
+#     nu: float = 5.0  # Degrees of freedom for the Student's T distribution
+#     lengthscale_prior: gpytorch.priors.Prior = field(default_factory=lambda: GammaPrior(3.0, 6.0))
+#     outputscale_prior: gpytorch.priors.Prior = field(default_factory=lambda: GammaPrior(2.0, 0.15))
+#     noise_prior: gpytorch.priors.Prior = field(default_factory=lambda: GammaPrior(1.1, 0.05))
+#     lengthscale_constraint: gpytorch.constraints.Interval = field(default_factory=Positive)
+#     outputscale_constraint: gpytorch.constraints.Interval = field(default_factory=Positive)
+#     noise_constraint: gpytorch.constraints.Interval = field(default_factory=lambda: GreaterThan(1e-4))
+#     trained_params: Optional[dict] = None
+#     device: torch.device = torch.device("cpu")
+#     dtype: torch.dtype = torch.float
 
 
 # ======================
@@ -109,19 +103,19 @@ def create_gaussian_likelihood(config: GPModelConfig):
     return likelihood
 
 
-def create_student_t_likelihood(config: TPModelConfig):
-    """
-    Creates the Student's T likelihood for the TP model.
-    """
-    likelihood = StudentTLikelihood(
-        noise_prior=config.noise_prior,
-        noise_constraint=config.noise_constraint,
-    )
-    if config.trained_params and "nu" in config.trained_params:
-        likelihood.nu = torch.tensor(config.trained_params["nu"]).to(
-            device=config.device, dtype=config.dtype
-        )
-    return likelihood
+# def create_student_t_likelihood(config: TPModelConfig):
+#     """
+#     Creates the Student's T likelihood for the TP model.
+#     """
+#     likelihood = StudentTLikelihood(
+#         noise_prior=config.noise_prior,
+#         noise_constraint=config.noise_constraint,
+#     )
+#     if config.trained_params and "nu" in config.trained_params:
+#         likelihood.nu = torch.tensor(config.trained_params["nu"]).to(
+#             device=config.device, dtype=config.dtype
+#         )
+#     return likelihood
 
 
 def create_gp_model(train_x, train_y, config: GPModelConfig):
@@ -171,105 +165,105 @@ def create_gp_model(train_x, train_y, config: GPModelConfig):
 #         return MultivariateStudentT(mean_x, covar_x, self.nu, len(x))
     
 
-class TPModel(BatchedMultiOutputGPyTorchModel, ExactTP, FantasizeMixin):
-    def __init__(self, train_x, train_y, likelihood, config: TPModelConfig):
-        """
-        Initializes the TPModel with multiple inheritance.
+# class TPModel(BatchedMultiOutputGPyTorchModel, ExactTP, FantasizeMixin):
+#     def __init__(self, train_x, train_y, likelihood, config: TPModelConfig):
+#         """
+#         Initializes the TPModel with multiple inheritance.
 
-        Args:
-            train_x (Tensor): Training inputs.
-            train_y (Tensor): Training targets.
-            likelihood (StudentTLikelihood): Likelihood for the model.
-            config (TPModelConfig): Configuration parameters.
-        """
-        # Initialize the ExactTP parent class
-        ExactTP.__init__(self, train_x, train_y, likelihood)
+#         Args:
+#             train_x (Tensor): Training inputs.
+#             train_y (Tensor): Training targets.
+#             likelihood (StudentTLikelihood): Likelihood for the model.
+#             config (TPModelConfig): Configuration parameters.
+#         """
+#         # Initialize the ExactTP parent class
+#         ExactTP.__init__(self, train_x, train_y, likelihood)
         
-        # Initialize the BatchedMultiOutputGPyTorchModel parent class
-        BatchedMultiOutputGPyTorchModel.__init__(self)
+#         # Initialize the BatchedMultiOutputGPyTorchModel parent class
+#         BatchedMultiOutputGPyTorchModel.__init__(self)
         
-        # Initialize the FantasizeMixin parent class if necessary
-        # (FantasizeMixin typically does not require explicit initialization)
+#         # Initialize the FantasizeMixin parent class if necessary
+#         # (FantasizeMixin typically does not require explicit initialization)
 
-        # --------------------------------------------
-        self._set_dimensions(train_X=train_x, train_Y=train_y)
-        self.likelihood = likelihood
+#         # --------------------------------------------
+#         self._set_dimensions(train_X=train_x, train_Y=train_y)
+#         self.likelihood = likelihood
 
-        # Define mean and covariance modules
-        self.mean_module = gpytorch.means.ConstantMean()
-        nu = torch.tensor(config.nu, dtype=config.dtype, device=config.device)
-        self.nu = torch.nn.Parameter(nu)
-        self.data_num = torch.tensor(
-            train_y.shape[0], dtype=config.dtype, device=config.device
-        )
+#         # Define mean and covariance modules
+#         self.mean_module = gpytorch.means.ConstantMean()
+#         nu = torch.tensor(config.nu, dtype=config.dtype, device=config.device)
+#         self.nu = torch.nn.Parameter(nu)
+#         self.data_num = torch.tensor(
+#             train_y.shape[0], dtype=config.dtype, device=config.device
+#         )
 
-        # Define the kernel with ARD
-        self.covar_module = create_kernel(config)
+#         # Define the kernel with ARD
+#         self.covar_module = create_kernel(config)
 
-    def forward(self, x):
-        """
-        Defines the forward pass of the model.
+#     def forward(self, x):
+#         """
+#         Defines the forward pass of the model.
 
-        Args:
-            x (Tensor): Input tensor.
+#         Args:
+#             x (Tensor): Input tensor.
 
-        Returns:
-            MultivariateStudentT: The output distribution.
-        """
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
+#         Returns:
+#             MultivariateStudentT: The output distribution.
+#         """
+#         mean_x = self.mean_module(x)
+#         covar_x = self.covar_module(x)
 
-        # Compute the inverse quadratic form
-        covar_x_train_data = self.covar_module(self.train_inputs[0])
-        inv_quad, _ = covar_x_train_data.inv_quad_logdet(
-            inv_quad_rhs=self.train_targets - self.train_targets.mean(), logdet=False
-        )
+#         # Compute the inverse quadratic form
+#         covar_x_train_data = self.covar_module(self.train_inputs[0])
+#         inv_quad, _ = covar_x_train_data.inv_quad_logdet(
+#             inv_quad_rhs=self.train_targets - self.train_targets.mean(), logdet=False
+#         )
 
-        # Adjust variance based on degrees of freedom and data
-        tp_var_scale = (self.nu + inv_quad - 2) / (self.nu + self.data_num - 2)
-        covar_x = tp_var_scale.float() * covar_x
+#         # Adjust variance based on degrees of freedom and data
+#         tp_var_scale = (self.nu + inv_quad - 2) / (self.nu + self.data_num - 2)
+#         covar_x = tp_var_scale.float() * covar_x
 
-        return MultivariateStudentT(mean_x, covar_x, self.nu, len(x))
-
-
-    def get_posterior(self, X, observation_noise=False, posterior_transform=None):
-        """
-        Overrides the get_posterior method to return a custom posterior.
-
-        Args:
-            X (Tensor): Test inputs.
-            observation_noise (bool): Whether to include observation noise.
-            posterior_transform (callable, optional): A transformation to apply to the posterior.
-
-        Returns:
-            CustomPosterior: The posterior distribution.
-        """
-        return super().get_posterior(X, observation_noise, posterior_transform)
-
-    def train(self, *args, **kwargs):
-        """
-        Overrides the train method if additional training steps are needed.
-        """
-        super().train(*args, **kwargs)
-
-    def eval(self):
-        """
-        Overrides the eval method if additional evaluation steps are needed.
-        """
-        super().eval()
+#         return MultivariateStudentT(mean_x, covar_x, self.nu, len(x))
 
 
-def create_tp_model(train_x, train_y, config: TPModelConfig):
-    """
-    Creates the TP model.
-    """
-    # Create likelihood using the config
-    likelihood = create_student_t_likelihood(config)
+#     def get_posterior(self, X, observation_noise=False, posterior_transform=None):
+#         """
+#         Overrides the get_posterior method to return a custom posterior.
 
-    # Create the CustomTPModel
-    model = TPModel(train_x, train_y, likelihood, config)
+#         Args:
+#             X (Tensor): Test inputs.
+#             observation_noise (bool): Whether to include observation noise.
+#             posterior_transform (callable, optional): A transformation to apply to the posterior.
 
-    return model, likelihood
+#         Returns:
+#             CustomPosterior: The posterior distribution.
+#         """
+#         return super().get_posterior(X, observation_noise, posterior_transform)
+
+#     def train(self, *args, **kwargs):
+#         """
+#         Overrides the train method if additional training steps are needed.
+#         """
+#         super().train(*args, **kwargs)
+
+#     def eval(self):
+#         """
+#         Overrides the eval method if additional evaluation steps are needed.
+#         """
+#         super().eval()
+
+
+# def create_tp_model(train_x, train_y, config: TPModelConfig):
+#     """
+#     Creates the TP model.
+#     """
+#     # Create likelihood using the config
+#     likelihood = create_student_t_likelihood(config)
+
+#     # Create the CustomTPModel
+#     model = TPModel(train_x, train_y, likelihood, config)
+
+#     return model, likelihood
 
 
 # ======================
@@ -305,34 +299,34 @@ def train_gp(train_x_normalized, train_y_standardized, trained_params=None, devi
     # Return the trained model and updated trained parameters
     return model, trained_params
 
-def train_tp(train_x_normalized, train_y_standardized, trained_params=None, device=torch.device('cpu'), dtype=torch.float):
-    """
-    Trains the TP surrogate model.
-    """
-    # Ensure train_y_standardized is two-dimensional
-    if train_y_standardized.dim() == 1:
-        train_y_standardized = train_y_standardized.unsqueeze(-1)
+# def train_tp(train_x_normalized, train_y_standardized, trained_params=None, device=torch.device('cpu'), dtype=torch.float):
+#     """
+#     Trains the TP surrogate model.
+#     """
+#     # Ensure train_y_standardized is two-dimensional
+#     if train_y_standardized.dim() == 1:
+#         train_y_standardized = train_y_standardized.unsqueeze(-1)
 
-    # Create a configuration instance
-    config = TPModelConfig(
-        ard_num_dims=train_x_normalized.shape[-1],
-        trained_params=trained_params,
-        device=device,
-        dtype=dtype,
-    )
+#     # Create a configuration instance
+#     config = TPModelConfig(
+#         ard_num_dims=train_x_normalized.shape[-1],
+#         trained_params=trained_params,
+#         device=device,
+#         dtype=dtype,
+#     )
 
-    # Create and train the model
-    model, likelihood = create_tp_model(train_x_normalized, train_y_standardized, config)
-    trained_params = train_model_tp(
-        model, likelihood, train_x_normalized, train_y_standardized,
-        training_iterations=50, learning_rate=0.1
-    )
+#     # Create and train the model
+#     model, likelihood = create_tp_model(train_x_normalized, train_y_standardized, config)
+#     trained_params = train_model_tp(
+#         model, likelihood, train_x_normalized, train_y_standardized,
+#         training_iterations=50, learning_rate=0.1
+#     )
 
-    # Update the config with the trained parameters
-    config.trained_params = trained_params
+#     # Update the config with the trained parameters
+#     config.trained_params = trained_params
 
-    # Return the trained model and updated trained parameters
-    return model, trained_params
+#     # Return the trained model and updated trained parameters
+#     return model, trained_params
 
 # ======================
 # Training Modules
@@ -432,54 +426,54 @@ def train_model_gp(model, likelihood, train_x, train_y, training_iterations=50, 
 
 #     return trained_params
 
-def train_model_tp(model, likelihood, train_x, train_y, training_iterations=50, learning_rate=0.1):
-    """
-    Trains the TP model using a custom training loop.
-    """
-    # Ensure train_y is two-dimensional
-    if train_y.dim() == 1:
-        train_y = train_y.unsqueeze(-1)
+# def train_model_tp(model, likelihood, train_x, train_y, training_iterations=50, learning_rate=0.1):
+#     """
+#     Trains the TP model using a custom training loop.
+#     """
+#     # Ensure train_y is two-dimensional
+#     if train_y.dim() == 1:
+#         train_y = train_y.unsqueeze(-1)
 
-    # Set model and likelihood in training mode
-    model.train()
-    likelihood.train()
+#     # Set model and likelihood in training mode
+#     model.train()
+#     likelihood.train()
 
-    # Define the optimizer
-    optimizer = torch.optim.Adam(
-        [{'params': model.parameters()}], lr=learning_rate
-    )
+#     # Define the optimizer
+#     optimizer = torch.optim.Adam(
+#         [{'params': model.parameters()}], lr=learning_rate
+#     )
 
-    # Define the loss function (marginal log likelihood)
-    mll = ExactStudentTMarginalLogLikelihood(likelihood, model)
+#     # Define the loss function (marginal log likelihood)
+#     mll = ExactStudentTMarginalLogLikelihood(likelihood, model)
 
-    for i in range(training_iterations):
-        optimizer.zero_grad()
-        output = model(train_x)
+#     for i in range(training_iterations):
+#         optimizer.zero_grad()
+#         output = model(train_x)
 
-        # Adjust the target dimensions to match the model output
-        train_y_adjusted = train_y.view(-1, 1)  # Ensure train_y is reshaped to [N, 1]
+#         # Adjust the target dimensions to match the model output
+#         train_y_adjusted = train_y.view(-1, 1)  # Ensure train_y is reshaped to [N, 1]
         
-        loss = -mll(output, train_y_adjusted)
-        loss = loss.sum()  # Ensure loss is scalar
-        if (i + 1) % 10 == 0 or i == 0:
-            loss_value = loss.item()
-            logging.info(f'Iter {i + 1}/{training_iterations} - Loss: {loss_value:.3f}')
-        loss.backward()
-        optimizer.step()
+#         loss = -mll(output, train_y_adjusted)
+#         loss = loss.sum()  # Ensure loss is scalar
+#         if (i + 1) % 10 == 0 or i == 0:
+#             loss_value = loss.item()
+#             logging.info(f'Iter {i + 1}/{training_iterations} - Loss: {loss_value:.3f}')
+#         loss.backward()
+#         optimizer.step()
 
-    # Collect trained parameters in a dictionary
-    trained_params = {
-        "lengthscale": model.covar_module.base_kernel.lengthscale.detach().cpu().numpy(),
-        "outputscale": model.covar_module.outputscale.detach().cpu().numpy(),
-        "nu": model.nu.detach().cpu().numpy(),
-    }
+#     # Collect trained parameters in a dictionary
+#     trained_params = {
+#         "lengthscale": model.covar_module.base_kernel.lengthscale.detach().cpu().numpy(),
+#         "outputscale": model.covar_module.outputscale.detach().cpu().numpy(),
+#         "nu": model.nu.detach().cpu().numpy(),
+#     }
 
-    # Log the trained parameters
-    logging.info(f"Trained lengthscale: {trained_params['lengthscale']}")
-    logging.info(f"Trained outputscale: {trained_params['outputscale']}")
-    logging.info(f"Trained nu: {trained_params['nu']}")
+#     # Log the trained parameters
+#     logging.info(f"Trained lengthscale: {trained_params['lengthscale']}")
+#     logging.info(f"Trained outputscale: {trained_params['outputscale']}")
+#     logging.info(f"Trained nu: {trained_params['nu']}")
 
-    return trained_params
+#     return trained_params
 
 
 # ======================

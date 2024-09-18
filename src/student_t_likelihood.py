@@ -22,6 +22,7 @@ from gpytorch.likelihoods.noise_models import HomoskedasticNoise, Noise
 from .multivariate_student_t import MultivariateStudentT
 
 
+
 class _StudentTLikelihoodBase(Likelihood):
     """Base class for Student-t Likelihoods."""
 
@@ -123,6 +124,46 @@ class _StudentTLikelihoodBase(Likelihood):
         noise_covar = self._shaped_noise_covar(mean.shape, *params, **kwargs)
         full_covar = covar + noise_covar
         return MultivariateStudentT(loc=mean, covariance_matrix=full_covar, df=self.df)
+    
+    # def __call__(self, input, *args, **kwargs):
+    #     # Conditional
+    #     if torch.is_tensor(input):
+    #         return super().__call__(input, *args, **kwargs)
+    #     # Marginal
+    #     elif any(
+    #         [
+    #             isinstance(input, StudentT),
+    #             isinstance(input, MultivariateStudentT),
+    #             (
+    #                 isinstance(input, pyro.distributions.Independent)
+    #                 and isinstance(input.base_dist, pyro.distributions.Normal)
+    #             ),
+    #         ]
+    #     ):
+    #         return self.marginal(input, *args, **kwargs)
+    #     # Error
+    #     else:
+    #         raise RuntimeError(
+    #             "Likelihoods expects a MultivariateStudentT or StudentT input to make marginal predictions, or a "
+    #             "torch.Tensor for conditional predictions. Got a {}".format(
+    #                 input.__class__.__name__
+    #             )
+    #         )
+    def __call__(self, input, *args, **kwargs):
+        # Check if the input is StudentT or MultivariateStudentT
+        if isinstance(input, (MultivariateStudentT, torch.distributions.StudentT)):
+            return self.marginal(input, *args, **kwargs)
+        
+        # If input is tensor, handle it as a conditional distribution
+        elif torch.is_tensor(input):
+            function_dist = MultivariateStudentT(input, self.noise_covar(input).cholesky(), df=self.df)
+            return super().__call__(function_dist, *args, **kwargs)
+        
+        # Error: Handle unexpected input
+        else:
+            raise RuntimeError(
+                f"Expected a StudentT or MultivariateStudentT for marginal predictions, or a tensor for conditional predictions. Got: {input.__class__.__name__}"
+            )
 
 
 class StudentTLikelihood(_StudentTLikelihoodBase):

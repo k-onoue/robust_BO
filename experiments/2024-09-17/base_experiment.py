@@ -15,7 +15,7 @@ from src.test_functions import branin_hoo, sinusoidal_synthetic, hartmann6
 from src.utils_experiment import set_logger
 
 from base_bo import run_bo
-from base_components import train_gp, train_tp, optimize_acquisition_function  # Import the functions we defined
+from base_components import train_gp, optimize_acquisition_function  # Import the functions we defined
 
 # Example usage with Hartmann6 objective
 if __name__ == "__main__":
@@ -60,4 +60,4 @@ if __name__ == "__main__":
     set_logger(settings["name"], LOG_DIR)
 
     # Call run_bo with the specific train_gp and optimize_acquisition_function implementations
-    run_bo(settings, train_tp, optimize_acquisition_function)
+    run_bo(settings, train_gp, optimize_acquisition_function)
